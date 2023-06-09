@@ -38,11 +38,32 @@ async function run() {
       const result = await classCollection.find().toArray();
       res.send(result);
     })
+
+    app.get('/mySelectedClass', async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+          res.send([]);
+      };
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+          return res.status(403).send({ error: true, message: 'forbidden access' })
+      };
+
+      const query = { email: email };
+
+      const result = await mySelectedClass.find(query).toArray();
+      res.send(result)
+  });
+
     app.post('/mySelectedClass', async(req, res) => {
       const SelectedClass = req.body;
       const result = await mySelectedClass.insertOne(SelectedClass);
       res.send(result)
     })
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
