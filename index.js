@@ -17,17 +17,17 @@ app.get('/', (req, res) => {
 const verifyJwt = (req, res, next) => {
   const authorization = req.headers.authorization;
   if (!authorization) {
-      return res.status(401).send({ error: true, message: 'unauthorized access' })
+    return res.status(401).send({ error: true, message: 'unauthorized access' })
   }
   const token = authorization.split(' ')[1];
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-      if (err) {
-          return res.status(401).send({ error: true, message: 'unauthorized access' });
-      }
+    if (err) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' });
+    }
 
-      req.decoded = decoded;
-      next();
+    req.decoded = decoded;
+    next();
   })
 }
 
@@ -54,38 +54,57 @@ async function run() {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res.send({ token })
-      
-  })
+
+    })
 
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     })
 
-    app.get('/mySelectedClass',verifyJwt, async (req, res) => {
+    app.get('/mySelectedClass', verifyJwt, async (req, res) => {
       const email = req.query.email;
       if (!email) {
-          res.send([]);
+        res.send([]);
       };
 
       const decodedEmail = req.decoded.email;
       if (email !== decodedEmail) {
-          return res.status(403).send({ error: true, message: 'forbidden access' })
+        return res.status(403).send({ error: true, message: 'forbidden access' })
       };
 
       const query = { email: email };
 
       const result = await mySelectedClass.find(query).toArray();
       res.send(result)
-  });
+    });
 
-    app.post('/mySelectedClass', async(req, res) => {
+    app.post('/mySelectedClass', async (req, res) => {
       const SelectedClass = req.body;
       const result = await mySelectedClass.insertOne(SelectedClass);
       res.send(result)
     })
 
+    app.post('/create-payment-intent', verifyJwt, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
 
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+    app.delete('/mySelectedClass/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) };
+      const result = await mySelectedClass.deleteOne(query);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
