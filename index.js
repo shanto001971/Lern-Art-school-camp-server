@@ -53,6 +53,7 @@ async function run() {
     const classCollection = client.db("summerSchool").collection("class");
     const mySelectedClass = client.db("summerSchool").collection("myClass");
     const paymentCollection = client.db("summerSchool").collection("payment");
+    const userCollection = client.db("summerSchool").collection("user");
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -103,6 +104,23 @@ async function run() {
       res.send(result)
     });
 
+    app.get('/myAddClass', verifyJwt, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      };
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      };
+
+      const query = { email: email };
+
+      const result = await classCollection.find(query).toArray();
+      res.send(result)
+    });
+
     app.post('/mySelectedClass', async (req, res) => {
       const SelectedClass = req.body;
       const result = await mySelectedClass.insertOne(SelectedClass);
@@ -142,22 +160,18 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/myAddClass', verifyJwt, async (req, res) => {
-      const email = req.query.email;
-      if (!email) {
-        res.send([]);
-      };
+    app.post('/user', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+          return res.send({ message: 'already exists',error: true })
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+  })
 
-      const decodedEmail = req.decoded.email;
-      if (email !== decodedEmail) {
-        return res.status(403).send({ error: true, message: 'forbidden access' })
-      };
-
-      const query = { email: email };
-
-      const result = await classCollection.find(query).toArray();
-      res.send(result)
-    });
+   
 
     app.delete('/mySelectedClass/:id', async (req, res) => {
       const id = req.params.id
