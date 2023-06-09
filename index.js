@@ -61,6 +61,18 @@ async function run() {
 
     })
 
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'forbidden message' })
+      }
+      next();
+    }
+
+    
+
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
@@ -102,7 +114,7 @@ async function run() {
         clientSecret: paymentIntent.client_secret
       })
     })
-    
+
     app.post('/payments', verifyJwt, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
@@ -115,29 +127,29 @@ async function run() {
       res.send({ insertResult, deleteResult });
     })
 
-    
+
     app.post('/addClass', verifyJwt, async (req, res) => {
       const classItem = req.body;
       const result = await classCollection.insertOne(classItem);
       res.send(result);
-  });
+    });
 
-  app.get('/myAddClass', verifyJwt, async (req, res) => {
-    const email = req.query.email;
-    if (!email) {
-      res.send([]);
-    };
+    app.get('/myAddClass', verifyJwt, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      };
 
-    const decodedEmail = req.decoded.email;
-    if (email !== decodedEmail) {
-      return res.status(403).send({ error: true, message: 'forbidden access' })
-    };
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      };
 
-    const query = { email: email };
+      const query = { email: email };
 
-    const result = await classCollection.find(query).toArray();
-    res.send(result)
-  });
+      const result = await classCollection.find(query).toArray();
+      res.send(result)
+    });
 
     app.delete('/mySelectedClass/:id', async (req, res) => {
       const id = req.params.id
