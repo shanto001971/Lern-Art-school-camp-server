@@ -3,8 +3,11 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 require('dotenv').config();
 const port = process.env.PORT || 5000;
+
+console.log(process.env.PAYMENT_SECRET_KEY)
 
 
 app.use(cors());
@@ -49,6 +52,7 @@ async function run() {
 
     const classCollection = client.db("summerSchool").collection("class");
     const mySelectedClass = client.db("summerSchool").collection("myClass");
+    const paymentCollection = client.db("summerSchool").collection("payment");
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -98,6 +102,42 @@ async function run() {
         clientSecret: paymentIntent.client_secret
       })
     })
+    
+    app.post('/payments', verifyJwt, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+
+      const query = {
+        $in: payment.cartItems.map(id => new ObjectId(id))
+      }
+
+      const deleteResult = await mySelectedClass.deleteMany(query);
+      res.send({ insertResult, deleteResult });
+    })
+
+    
+    app.post('/addClass', verifyJwt, async (req, res) => {
+      const classItem = req.body;
+      const result = await classCollection.insertOne(classItem);
+      res.send(result);
+  });
+
+  app.get('/addClass', verifyJwt, async (req, res) => {
+    const email = req.query.email;
+    if (!email) {
+      res.send([]);
+    };
+
+    const decodedEmail = req.decoded.email;
+    if (email !== decodedEmail) {
+      return res.status(403).send({ error: true, message: 'forbidden access' })
+    };
+
+    const query = { email: email };
+
+    const result = await classCollection.find(query).toArray();
+    res.send(result)
+  });
 
     app.delete('/mySelectedClass/:id', async (req, res) => {
       const id = req.params.id
@@ -105,6 +145,7 @@ async function run() {
       const result = await mySelectedClass.deleteOne(query);
       res.send(result);
     })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
