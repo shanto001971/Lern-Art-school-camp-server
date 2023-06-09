@@ -122,7 +122,7 @@ async function run() {
       res.send(result);
   });
 
-  app.get('/addClass', verifyJwt, async (req, res) => {
+  app.get('/myAddClass', verifyJwt, async (req, res) => {
     const email = req.query.email;
     if (!email) {
       res.send([]);
