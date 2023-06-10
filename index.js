@@ -104,7 +104,7 @@ async function run() {
       res.send(result)
     });
 
-    app.get('/myAddClass', verifyJwt, async (req, res) => {
+     app.get('/myAddClass', verifyJwt, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
@@ -170,6 +170,21 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
   })
+
+  app.patch('/updateClassStatus/admin/:id',verifyJwt, async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const updateStatus = req.body;
+    console.log(updateStatus.status)
+    const updateDoc = {
+        $set: {
+          status: updateStatus.status
+        },
+    };
+
+    const result = await classCollection.updateOne(filter, updateDoc);
+    res.send(result);
+})
 
    
 
