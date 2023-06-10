@@ -77,10 +77,10 @@ async function run() {
       const query = { email: email };
       const user = await userCollection.findOne(query);
       if (user?.role !== 'admin') {
-          return res.status(403).send({ error: true, message: 'forbidden message' })
+        return res.status(403).send({ error: true, message: 'forbidden message' })
       }
       next();
-  }
+    }
 
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
@@ -104,7 +104,7 @@ async function run() {
       res.send(result)
     });
 
-     app.get('/myAddClass', verifyJwt, async (req, res) => {
+    app.get('/myAddClass', verifyJwt, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
@@ -120,6 +120,11 @@ async function run() {
       const result = await classCollection.find(query).toArray();
       res.send(result)
     });
+
+    app.get('/user',verifyJwt, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    })
 
     app.post('/mySelectedClass', async (req, res) => {
       const SelectedClass = req.body;
@@ -165,28 +170,28 @@ async function run() {
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
       if (existingUser) {
-          return res.send({ message: 'already exists',error: true })
+        return res.send({ message: 'already exists', error: true })
       }
       const result = await userCollection.insertOne(user);
       res.send(result);
-  })
+    })
 
-  app.patch('/updateClassStatus/admin/:id',verifyJwt, async (req, res) => {
-    const id = req.params.id;
-    const filter = { _id: new ObjectId(id) };
-    const updateStatus = req.body;
-    console.log(updateStatus.status)
-    const updateDoc = {
+    app.patch('/updateClassStatus/admin/:id', verifyJwt, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateStatus = req.body;
+      console.log(updateStatus.status)
+      const updateDoc = {
         $set: {
           status: updateStatus.status
         },
-    };
+      };
 
-    const result = await classCollection.updateOne(filter, updateDoc);
-    res.send(result);
-})
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
 
-   
+
 
     app.delete('/mySelectedClass/:id', async (req, res) => {
       const id = req.params.id
