@@ -18,6 +18,7 @@ app.get('/', (req, res) => {
 })
 
 const verifyJwt = (req, res, next) => {
+  console.log(req.headers.authorization)
   const authorization = req.headers.authorization;
   if (!authorization) {
     return res.status(401).send({ error: true, message: 'unauthorized access' })
@@ -180,7 +181,7 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateStatus = req.body;
-      console.log(updateStatus.status)
+      // console.log(updateStatus.status)
       const updateDoc = {
         $set: {
           status: updateStatus.status
@@ -188,6 +189,19 @@ async function run() {
       };
 
       const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    app.patch('/updateRole/admin/:id', verifyJwt, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateRole = req.body;
+      const updateDoc = {
+        $set: {
+          role: updateRole.role
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
 
