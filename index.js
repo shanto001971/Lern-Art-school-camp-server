@@ -106,7 +106,7 @@ async function run() {
       res.send(result)
     });
 
-    app.get('/myAddClass', verifyJwt,verifyInstructor, async (req, res) => {
+    app.get('/myAddClass', verifyJwt, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
@@ -139,6 +139,7 @@ async function run() {
       }
       const query = { email: email };
       const user = await userCollection.findOne(query);
+      console.log(user)
       const result = { instructor: user.role === 'instructor' }
       res.send(result);
 
