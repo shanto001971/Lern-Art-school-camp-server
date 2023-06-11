@@ -7,7 +7,7 @@ const stripe = require('stripe')('sk_test_51NEVBKBWohq9MJc78a7gY3EN69FCqMvLdvxJd
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
-console.log(process.env.PAYMENT_SECRET_KEY)
+// console.log(process.env.PAYMENT_SECRET_KEY)
 
 
 app.use(cors());
@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 })
 
 const verifyJwt = (req, res, next) => {
-  console.log(req.headers.authorization)
+  // console.log(req.headers.authorization)
   const authorization = req.headers.authorization;
   if (!authorization) {
     return res.status(401).send({ error: true, message: 'unauthorized access' })
@@ -55,6 +55,7 @@ async function run() {
     const mySelectedClass = client.db("summerSchool").collection("myClass");
     const paymentCollection = client.db("summerSchool").collection("payment");
     const userCollection = client.db("summerSchool").collection("user");
+    const instructorCollection = client.db("summerSchool").collection("instructor");
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -105,7 +106,7 @@ async function run() {
       res.send(result)
     });
 
-    app.get('/myAddClass', verifyJwt, async (req, res) => {
+    app.get('/myAddClass', verifyJwt,verifyInstructor, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
@@ -124,6 +125,10 @@ async function run() {
 
     app.get('/user',verifyJwt, async (req, res) => {
       const result = await userCollection.find().toArray();
+      res.send(result);
+    })
+    app.get('/instructor',verifyJwt, async (req, res) => {
+      const result = await instructorCollection.find().toArray();
       res.send(result);
     })
 
@@ -162,7 +167,7 @@ async function run() {
 
 })
 
-    app.post('/mySelectedClass', async (req, res) => {
+    app.post('/mySelectedClass',verifyJwt, async (req, res) => {
       const SelectedClass = req.body;
       const result = await mySelectedClass.insertOne(SelectedClass);
       res.send(result)
@@ -201,7 +206,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/user', async (req, res) => {
+    app.post('/user',verifyJwt, async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
@@ -214,9 +219,10 @@ async function run() {
 
     app.patch('/feedback/admin/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
+      console.log(id)
       const filter = { _id: new ObjectId(id) };
       const adminFeedback = req.body;
-      // console.log(updateStatus.status)
+     console.log(adminFeedback)
       const options = { upsert: true };
       const updateDoc = {
         $set: {
@@ -259,7 +265,7 @@ async function run() {
 
 
 
-    app.delete('/mySelectedClass/:id', async (req, res) => {
+    app.delete('/mySelectedClass/:id',verifyJwt, async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) };
       const result = await mySelectedClass.deleteOne(query);
