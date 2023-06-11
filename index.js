@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
+const stripe = require('stripe')('sk_test_51NEVBKBWohq9MJc78a7gY3EN69FCqMvLdvxJdXyfSivH4eQ544RUwjQImsIB77NETZl4fgAukQx5E6s2O1z1bXF600JFUOjBqb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
@@ -88,7 +88,7 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/mySelectedClass', verifyJwt, async (req, res) => {
+    app.get('/mySelectedClass',verifyJwt, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
@@ -126,6 +126,41 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     })
+
+    app.get('/users/instructors/:email', verifyJwt, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+          res.send({ instructor: false })
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const result = { instructor: user.role === 'instructor' }
+      res.send(result);
+
+  })
+    app.get('/users/students/:email', verifyJwt, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+          res.send({ students: false })
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const result = { students: user.role === 'students' }
+      res.send(result);
+
+  })
+
+  app.get('/users/admin/:email', verifyJwt, async (req, res) => {
+    const email = req.params.email;
+    if (req.decoded.email !== email) {
+        res.send({ admin: false })
+    }
+    const query = { email: email };
+    const user = await userCollection.findOne(query);
+    const result = { admin: user.role === 'admin' }
+    res.send(result);
+
+})
 
     app.post('/mySelectedClass', async (req, res) => {
       const SelectedClass = req.body;
@@ -176,6 +211,23 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     })
+
+    app.patch('/feedback/admin/:id', verifyJwt, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const adminFeedback = req.body;
+      // console.log(updateStatus.status)
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          feedback: adminFeedback.feedback
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc,options);
+      res.send(result);
+    })
+
 
     app.patch('/updateClassStatus/admin/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
