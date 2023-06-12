@@ -132,6 +132,10 @@ async function run() {
       const result = await instructorCollection.find().toArray();
       res.send(result);
     })
+    app.get('/PaymentHistory', async (req, res) => {
+      const result = await paymentCollection.find().toArray();
+      res.send(result);
+    })
 
     app.get('/users/instructors/:email', verifyJwt, async (req, res) => {
       const email = req.params.email;
@@ -193,12 +197,7 @@ async function run() {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
 
-      const query = {
-        $in: payment.cartItems.map(id => new ObjectId(id))
-      }
-
-      const deleteResult = await mySelectedClass.deleteMany(query);
-      res.send({ insertResult, deleteResult });
+      res.send({ insertResult });
     })
 
 
