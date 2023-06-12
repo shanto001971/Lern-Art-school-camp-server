@@ -91,6 +91,7 @@ async function run() {
 
     app.get('/mySelectedClass',verifyJwt, async (req, res) => {
       const email = req.query.email;
+      console.log(email)
       if (!email) {
         res.send([]);
       };
@@ -127,7 +128,7 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     })
-    app.get('/instructor',verifyJwt, async (req, res) => {
+    app.get('/instructor', async (req, res) => {
       const result = await instructorCollection.find().toArray();
       res.send(result);
     })
@@ -140,7 +141,7 @@ async function run() {
       const query = { email: email };
       const user = await userCollection.findOne(query);
       console.log(user)
-      const result = { instructor: user.role === 'instructor' }
+      const result = { instructor: user?.role === 'instructor' }
       res.send(result);
 
   })
@@ -151,19 +152,19 @@ async function run() {
       }
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      const result = { students: user.role === 'students' }
+      const result = { students: user?.role === 'students' }
       res.send(result);
 
   })
 
-  app.get('/users/admin/:email', verifyJwt, async (req, res) => {
+  app.get('/users/admin/:email',verifyJwt, async (req, res) => {
     const email = req.params.email;
     if (req.decoded.email !== email) {
         res.send({ admin: false })
     }
     const query = { email: email };
     const user = await userCollection.findOne(query);
-    const result = { admin: user.role === 'admin' }
+    const result = { admin: user?.role === 'admin' }
     res.send(result);
 
 })
